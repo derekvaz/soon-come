@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: #ffffff;
+  --color-foreground: #000000;
+  --color-muted: #6a7282;
+  --color-green: #00843d;
+  --color-red: #ef3340;
+  --color-live-green: #00c950;
+  --font-sans: "Inter", sans-serif;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+}
+
+/* Remove dark mode override */
