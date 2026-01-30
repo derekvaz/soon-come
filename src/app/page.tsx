@@ -1,13 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
+
+interface Route {
+  tag: string;
+  title: string;
+}
 
 export default function SearchPage() {
   const router = useRouter();
   const [route, setRoute] = useState("");
   const [location, setLocation] = useState("");
+  const [routes, setRoutes] = useState<Route[]>([]);
+  const [open, setOpen] = useState(false);
+  const comboRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch("/api/routes")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setRoutes(data);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (comboRef.current && !comboRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filtered = routes.filter(
+    (r) =>
+      r.tag.toLowerCase().includes(route.toLowerCase()) ||
+      r.title.toLowerCase().includes(route.toLowerCase())
+  );
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -48,18 +81,25 @@ export default function SearchPage() {
                   Route / Line
                 </span>
               </label>
-              <div className="relative">
+              <div className="relative" ref={comboRef}>
                 <input
                   type="text"
                   value={route}
-                  onChange={(e) => setRoute(e.target.value)}
+                  onChange={(e) => {
+                    setRoute(e.target.value);
+                    setOpen(true);
+                  }}
+                  onFocus={() => setOpen(true)}
                   placeholder="504"
                   className="w-full h-[79px] border-[3.7px] border-black px-5 text-[16px] font-black uppercase tracking-[0.07px] placeholder:text-muted focus:outline-none"
                 />
                 {route && (
                   <button
                     type="button"
-                    onClick={() => setRoute("")}
+                    onClick={() => {
+                      setRoute("");
+                      setOpen(false);
+                    }}
                     className="absolute right-3 top-1/2 -translate-y-1/2 p-2"
                     aria-label="Clear route"
                   >
@@ -67,6 +107,24 @@ export default function SearchPage() {
                       <path d="M18 6L6 18M6 6l12 12" />
                     </svg>
                   </button>
+                )}
+                {open && filtered.length > 0 && (
+                  <ul className="absolute z-10 left-0 right-0 max-h-[240px] overflow-y-auto bg-white border-[3.7px] border-t-0 border-black">
+                    {filtered.map((r) => (
+                      <li key={r.tag}>
+                        <button
+                          type="button"
+                          className="w-full text-left px-5 py-3 text-[14px] font-bold uppercase tracking-[0.07px] hover:bg-black hover:text-white"
+                          onClick={() => {
+                            setRoute(r.tag);
+                            setOpen(false);
+                          }}
+                        >
+                          {r.title}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </div>
             </div>
