@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
             minutes: parseInt(p.minutes, 10),
             type: p.vehicle ? ("live" as const) : ("estimate" as const),
           }));
-          const soonCome = departures.length > 0 && departures[0].minutes <= 5;
+          const soonCome = departures.length > 0 && departures[0].minutes < 10;
 
           return {
             stopName: preds.stopTitle,
