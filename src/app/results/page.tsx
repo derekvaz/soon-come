@@ -21,7 +21,7 @@ interface Result {
 function ResultsContent() {
   const searchParams = useSearchParams();
   const route = searchParams.get("route") ?? "";
-  const location = searchParams.get("location") ?? "";
+  const stop = searchParams.get("stop") ?? "";
 
   const [results, setResults] = useState<Result[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +35,7 @@ function ResultsContent() {
     }
 
     const params = new URLSearchParams({ route });
-    if (location) params.set("location", location);
+    if (stop) params.set("stop", stop);
 
     fetch(`/api/predictions?${params}`)
       .then((res) => {
@@ -50,7 +50,7 @@ function ResultsContent() {
         setError(typeof err === "string" ? err : "Failed to fetch predictions");
         setLoading(false);
       });
-  }, [route, location]);
+  }, [route, stop]);
 
   return (
     <div className="flex flex-col min-h-screen">
