@@ -11,7 +11,9 @@
 - **Language**: TypeScript 5 (strict mode)
 - **Linting**: ESLint 9 with `eslint-config-next`
 - **Testing**: None configured
-- **Deployment**: Vercel-compatible
+- **Deployment**: Netlify (soon-come.netlify.app)
+- **Project Management**: Linear (via MCP)
+- **MCP Servers**: Linear (`linear-server`), Netlify (`netlify`)
 
 ## Directory Structure
 
@@ -76,6 +78,27 @@ Route list is cached in memory. Predictions are fetched for up to 10 matching st
 - Bold typography: Inter font, weights 700 and 900
 - High contrast black/white with green/red accents
 - Large 96px text for "Soon come?" header and Yes/No answers
+
+## Dev Workflow
+
+Tasks are managed in **Linear**. The development process follows this cycle:
+
+1. **Pick a task**: Query Linear for the oldest, highest-priority issue with status "Todo"
+2. **Write a PRD**: Update the Linear issue description with a Product Requirements Document
+3. **Mark In Progress**: Set the Linear issue status to "In Progress"
+4. **Branch**: Create a feature branch from `main` (e.g., `feat/SOO-123-short-description`)
+5. **Develop**: Implement the solution against the PRD
+6. **Commit & Push**: Commit changes and push the branch
+7. **Create PR**: Open a GitHub pull request linking the Linear issue
+8. **Mark In Review**: Update the Linear issue status to "In Review"
+9. **Preview**: Provide the Netlify deploy preview URL for review (soon-come.netlify.app)
+10. **Merge & Close**: Once approved, merge the PR and mark the Linear issue as "Done"
+
+## Deployment
+
+- **Production URL**: https://soon-come.netlify.app
+- Deploys automatically on push to `main` via Netlify
+- PR branches get deploy preview URLs from Netlify
 
 ## Environment Variables
 
