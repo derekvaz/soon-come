@@ -81,24 +81,32 @@ Route list is cached in memory. Predictions are fetched for up to 10 matching st
 
 ## Dev Workflow
 
-Tasks are managed in **Linear**. The development process follows this cycle:
+Tasks are managed in **Linear** and deployed via **Netlify**. MCP servers for both are configured in `.mcp.json`.
 
-1. **Pick a task**: Query Linear for the oldest, highest-priority issue with status "Todo"
-2. **Write a PRD**: Update the Linear issue description with a Product Requirements Document
-3. **Mark In Progress**: Set the Linear issue status to "In Progress"
-4. **Branch**: Create a feature branch from `main` (e.g., `feat/SOO-123-short-description`)
-5. **Develop**: Implement the solution against the PRD
-6. **Commit & Push**: Commit changes and push the branch
-7. **Create PR**: Open a GitHub pull request linking the Linear issue
-8. **Mark In Review**: Update the Linear issue status to "In Review"
-9. **Preview**: Provide the Netlify deploy preview URL for review (soon-come.netlify.app)
-10. **Merge & Close**: Once approved, merge the PR and mark the Linear issue as "Done"
+### Task Lifecycle
 
-## Deployment
+1. **Pick a task** — Query Linear for the oldest, highest-priority issue with status "Todo"
+2. **Write a PRD** — Update the Linear issue description with a Product Requirements Document
+3. **Mark In Progress** — Set the Linear issue status to "In Progress"
+4. **Branch** — Create a feature branch from `main` (e.g. `feat/SOO-123-short-description`)
+5. **Develop** — Implement the solution against the PRD
+6. **Commit & Push** — Commit changes and push the branch
+7. **Create PR** — Open a GitHub pull request linking the Linear issue
+8. **Mark In Review** — Update the Linear issue status to "In Review"
+9. **Preview** — Provide the Netlify deploy preview URL for review
+10. **Merge & Close** — Once approved, merge the PR and mark the Linear issue as "Done"
+
+### Deployment
 
 - **Production URL**: https://soon-come.netlify.app
 - Deploys automatically on push to `main` via Netlify
 - PR branches get deploy preview URLs from Netlify
+- Use the Netlify MCP to check deploy status and get preview URLs
+
+### Linear
+
+- Use the Linear MCP to query, create, and update issues
+- Always reference the Linear issue ID (e.g. `SOO-5`) in commit messages and PR descriptions
 
 ## Environment Variables
 
