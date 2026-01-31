@@ -39,6 +39,7 @@ interface UmoiqStop {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const route = searchParams.get("route");
+  const stop = searchParams.get("stop");
   const location = searchParams.get("location")?.toLowerCase();
 
   if (!route) {
@@ -46,7 +47,33 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Get route config to find stops
+    // Direct stop lookup — skip routeConfig entirely
+    if (stop) {
+      const predRes = await fetch(`${BASE}?command=predictions&a=ttc&r=${encodeURIComponent(route)}&s=${encodeURIComponent(stop)}`);
+      const predData = await predRes.json();
+      const preds: UmoiqPredictions = predData.predictions;
+      if (!preds || !preds.direction) {
+        return NextResponse.json({ results: [] });
+      }
+      const directions = Array.isArray(preds.direction) ? preds.direction : [preds.direction];
+      const results = directions.map((dir) => {
+        const predictions = Array.isArray(dir.prediction) ? dir.prediction : [dir.prediction];
+        const departures = predictions.map((p) => ({
+          minutes: parseInt(p.minutes, 10),
+          type: p.vehicle ? ("live" as const) : ("estimate" as const),
+        }));
+        const soonCome = departures.length > 0 && departures[0].minutes < 10;
+        return {
+          stopName: preds.stopTitle,
+          direction: dir.title,
+          soonCome,
+          departures: departures.slice(0, 3),
+        };
+      });
+      return NextResponse.json({ results });
+    }
+
+    // Fallback: location-based lookup
     const configRes = await fetch(`${BASE}?command=routeConfig&a=ttc&r=${encodeURIComponent(route)}`);
     if (!configRes.ok) {
       return NextResponse.json({ error: "Route not found" }, { status: 404 });
@@ -60,7 +87,6 @@ export async function GET(request: NextRequest) {
     const routeData = config.route;
     const allStops: UmoiqStop[] = Array.isArray(routeData.stop) ? routeData.stop : [routeData.stop];
 
-    // Filter stops by location text if provided
     let matchedStops = allStops;
     if (location) {
       matchedStops = allStops.filter((s: UmoiqStop) =>
@@ -68,7 +94,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Limit to avoid hammering the API
     const stopsToQuery = matchedStops.slice(0, 10);
 
     if (stopsToQuery.length === 0) {
