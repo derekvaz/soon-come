@@ -24,13 +24,11 @@ function ResultsContent() {
   const stop = searchParams.get("stop") ?? "";
 
   const [results, setResults] = useState<Result[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(!!route);
+  const [error, setError] = useState(!route ? "No route specified" : "");
 
   useEffect(() => {
     if (!route) {
-      setLoading(false);
-      setError("No route specified");
       return;
     }
 
