@@ -1,127 +1,54 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import Footer from "@/components/Footer";
+import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
-interface Option {
+interface Route {
   tag: string;
   title: string;
 }
 
-function Combobox({
-  label,
-  icon,
-  placeholder,
-  value,
-  options,
-  onSelect,
-  onClear,
-}: {
-  label: string;
-  icon: React.ReactNode;
-  placeholder: string;
-  value: string;
-  options: Option[];
-  onSelect: (tag: string) => void;
-  onClear: () => void;
-}) {
-  const [query, setQuery] = useState("");
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  const selectedTitle = options.find((o) => o.tag === value)?.title ?? "";
-  const display = value ? selectedTitle : query;
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const filtered = options.filter(
-    (o) =>
-      o.tag.toLowerCase().includes((value ? "" : query).toLowerCase()) ||
-      o.title.toLowerCase().includes((value ? "" : query).toLowerCase())
-  );
-
-  return (
-    <div>
-      <label className="flex items-center gap-[6px] mb-2 pl-1">
-        {icon}
-        <span className="text-[12px] font-black uppercase tracking-[2.4px]">
-          {label}
-        </span>
-      </label>
-      <div className="relative" ref={ref}>
-        <input
-          type="text"
-          value={display}
-          onChange={(e) => {
-            if (value) {
-              onClear();
-            }
-            setQuery(e.target.value);
-            setOpen(true);
-          }}
-          onFocus={() => setOpen(true)}
-          placeholder={placeholder}
-          readOnly={!!value}
-          className="w-full h-[79px] border-[3.7px] border-black px-5 text-[16px] font-black uppercase tracking-[0.07px] placeholder:text-muted focus:outline-none"
-        />
-        {(value || query) && (
-          <button
-            type="button"
-            onClick={() => {
-              onClear();
-              setQuery("");
-              setOpen(false);
-            }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-2"
-            aria-label={`Clear ${label}`}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
-        )}
-        {open && !value && filtered.length > 0 && (
-          <ul className="absolute z-10 left-0 right-0 max-h-[240px] overflow-y-auto bg-white border-[3.7px] border-t-0 border-black">
-            {filtered.map((o) => (
-              <li key={o.tag}>
-                <button
-                  type="button"
-                  className="w-full text-left px-5 py-3 text-[14px] font-bold uppercase tracking-[0.07px] hover:bg-black hover:text-white"
-                  onClick={() => {
-                    onSelect(o.tag);
-                    setQuery("");
-                    setOpen(false);
-                  }}
-                >
-                  {o.title}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </div>
-  );
+interface Stop {
+  tag: string;
+  title: string;
 }
 
-export default function SearchPage() {
-  const router = useRouter();
-  const [routes, setRoutes] = useState<Option[]>([]);
-  const [route, setRoute] = useState("");
-  const [directions, setDirections] = useState<Option[]>([]);
-  const [direction, setDirection] = useState("");
-  const [stops, setStops] = useState<Option[]>([]);
-  const [stop, setStop] = useState("");
+interface Direction {
+  tag: string;
+  title: string;
+}
 
+interface SearchResult {
+  type: "route" | "stop";
+  routeTag: string;
+  routeTitle: string;
+  stopTag?: string;
+  stopTitle?: string;
+  display: string;
+}
+
+function SearchContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const shouldFocus = searchParams.get("focus") === "true";
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [routes, setRoutes] = useState<Route[]>([]);
+  const [routeStopsCache, setRouteStopsCache] = useState<Map<string, { directions: Direction[]; stops: Stop[] }>>(new Map());
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-focus input when coming from results page
+  // Note: focusing the input triggers onFocus which sets open to true
+  useEffect(() => {
+    if (shouldFocus && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [shouldFocus]);
+
+  // Load routes on mount
   useEffect(() => {
     fetch("/api/routes")
       .then((r) => r.json())
@@ -131,137 +58,249 @@ export default function SearchPage() {
       .catch(() => {});
   }, []);
 
-  const handleRouteSelect = useCallback((tag: string) => {
-    setRoute(tag);
-    setDirection("");
-    setDirections([]);
-    setStop("");
-    setStops([]);
-    fetch(`/api/stops?route=${encodeURIComponent(tag)}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.directions) setDirections(data.directions);
-      })
-      .catch(() => {});
+  // Click outside to close dropdown
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleDirectionSelect = useCallback(
-    (tag: string) => {
-      setDirection(tag);
-      setStop("");
-      setStops([]);
-      fetch(`/api/stops?route=${encodeURIComponent(route)}&direction=${encodeURIComponent(tag)}`)
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.stops) setStops(data.stops);
-        })
-        .catch(() => {});
-    },
-    [route]
-  );
+  // Fetch stops for a route
+  const fetchRouteStops = useCallback(async (routeTag: string): Promise<{ directions: Direction[]; stops: Stop[] }> => {
+    const cached = routeStopsCache.get(routeTag);
+    if (cached) return cached;
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!route || !stop) return;
-    const params = new URLSearchParams({ route, stop });
-    router.push(`/results?${params.toString()}`);
+    try {
+      const res = await fetch(`/api/stops?route=${encodeURIComponent(routeTag)}`);
+      const data = await res.json();
+      const result = {
+        directions: data.directions || [],
+        stops: [] as Stop[],
+      };
+
+      // Fetch stops for all directions
+      if (data.directions?.length > 0) {
+        const allStops: Stop[] = [];
+        for (const dir of data.directions) {
+          const dirRes = await fetch(`/api/stops?route=${encodeURIComponent(routeTag)}&direction=${encodeURIComponent(dir.tag)}`);
+          const dirData = await dirRes.json();
+          if (dirData.stops) {
+            dirData.stops.forEach((stop: Stop) => {
+              if (!allStops.find(s => s.tag === stop.tag)) {
+                allStops.push(stop);
+              }
+            });
+          }
+        }
+        result.stops = allStops;
+      }
+
+      setRouteStopsCache(prev => new Map(prev).set(routeTag, result));
+      return result;
+    } catch {
+      return { directions: [], stops: [] };
+    }
+  }, [routeStopsCache]);
+
+  // Perform search when query changes
+  const performSearch = useCallback(async (searchQuery: string) => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    const q = searchQuery.toLowerCase().trim();
+    const queryWords = q.split(/\s+/);
+
+    // First, check if any word matches a route number/name
+    const matchedRoutes = routes.filter((r) =>
+      queryWords.some(word =>
+        r.tag.toLowerCase().includes(word) ||
+        r.title.toLowerCase().includes(word)
+      )
+    ).slice(0, 5);
+
+    // Also search in already cached stops
+    const cachedResults: SearchResult[] = [];
+    routeStopsCache.forEach((data, routeTag) => {
+      const route = routes.find(r => r.tag === routeTag);
+      if (!route) return;
+
+      const matchingStops = data.stops.filter((stop) => {
+        const combined = `${route.title} ${stop.title}`.toLowerCase();
+        return queryWords.every(word => combined.includes(word));
+      });
+
+      matchingStops.slice(0, 10).forEach((stop) => {
+        cachedResults.push({
+          type: "stop",
+          routeTag: route.tag,
+          routeTitle: route.title,
+          stopTag: stop.tag,
+          stopTitle: stop.title,
+          display: `${route.title} • ${stop.title}`,
+        });
+      });
+    });
+
+    // If we have cached results, show them immediately
+    if (cachedResults.length > 0) {
+      setSearchResults(cachedResults);
+    }
+
+    // If no routes matched, just use cached results
+    if (matchedRoutes.length === 0) {
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+
+    const allResults = await Promise.all(
+      matchedRoutes.map(async (route) => {
+        const routeResults: SearchResult[] = [];
+
+        // Fetch stops for this route
+        const data = await fetchRouteStops(route.tag);
+
+        // Filter stops where all query words appear in route+stop combined
+        const matchingStops = data.stops.filter((stop) => {
+          const combined = `${route.title} ${stop.title}`.toLowerCase();
+          return queryWords.every(word => combined.includes(word));
+        });
+
+        // If query matches stops, show those; otherwise show first stops
+        const stopsToShow = matchingStops.length > 0
+          ? matchingStops.slice(0, 15)
+          : data.stops.slice(0, 5);
+
+        stopsToShow.forEach((stop) => {
+          routeResults.push({
+            type: "stop",
+            routeTag: route.tag,
+            routeTitle: route.title,
+            stopTag: stop.tag,
+            stopTitle: stop.title,
+            display: `${route.title} • ${stop.title}`,
+          });
+        });
+
+        return routeResults;
+      })
+    );
+
+    const flattened = allResults.flat();
+    setSearchResults(flattened);
+    setIsSearching(false);
+  }, [routes, fetchRouteStops, routeStopsCache]);
+
+  // Debounced search effect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      performSearch(query);
+    }, 150);
+
+    return () => clearTimeout(timeoutId);
+  }, [query, performSearch]);
+
+  // Compute display results based on query
+  const displayResults = useMemo(() => {
+    if (!query.trim()) return [];
+    return searchResults;
+  }, [query, searchResults]);
+
+  const showLoading = isSearching && displayResults.length === 0;
+
+  function handleSelect(result: SearchResult) {
+    if (result.type === "stop" && result.stopTag) {
+      const params = new URLSearchParams({
+        route: result.routeTag,
+        stop: result.stopTag,
+      });
+      router.push(`/results?${params.toString()}`);
+    } else {
+      // Just a route selected, expand to show route info
+      setQuery(result.routeTitle);
+    }
+    setOpen(false);
   }
 
-  const routeIcon = (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-      <circle cx="12" cy="12" r="10" />
-      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-    </svg>
-  );
-
-  const directionIcon = (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-      <path d="M5 12h14M12 5l7 7-7 7" />
-    </svg>
-  );
-
-  const stopIcon = (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-      <circle cx="12" cy="10" r="3" />
-    </svg>
-  );
+  function handleClear() {
+    setQuery("");
+    setSearchResults([]);
+    inputRef.current?.focus();
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="bg-white px-6 pt-16 pb-2 border-b-[8px] border-black">
-        <div className="flex flex-col gap-6">
-          <h1 className="text-[96px] font-black leading-[72px] tracking-[-4.76px]">
-            Soon
-            <br />
-            come?
-          </h1>
-          <p className="text-[16px] font-bold uppercase tracking-[2.89px] opacity-60">
-            Toronto Real-Time Transit
-          </p>
-        </div>
-      </header>
+      {/* Black header - 74px */}
+      <div className="h-[74px] bg-black" />
 
-      <form onSubmit={handleSubmit} className="bg-white px-6 pt-6 pb-2 shadow-[0px_8px_0px_0px_rgba(0,0,0,0.05)]">
-        <div className="flex flex-col gap-8">
-          <div className="flex flex-col gap-7">
-            <Combobox
-              label="Route / Line"
-              icon={routeIcon}
-              placeholder="504"
-              value={route}
-              options={routes}
-              onSelect={handleRouteSelect}
-              onClear={() => {
-                setRoute("");
-                setDirection("");
-                setDirections([]);
-                setStop("");
-                setStops([]);
+      <div className="flex-1 flex flex-col bg-ttc-red px-[16px] pt-[42px]">
+        {/* Search input */}
+        <div className="w-full" ref={containerRef}>
+          <div className="relative">
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setOpen(true);
               }}
+              onFocus={() => setOpen(true)}
+              placeholder="Search routes or stops..."
+              className="w-full h-[61px] bg-white/20 border border-white/30 px-[24px] rounded-[56px] text-white text-[16px] font-semibold placeholder:text-white/50 focus:outline-none focus:bg-white/25 focus:border-white/40 transition-all"
             />
-
-            {route && directions.length > 0 && (
-              <Combobox
-                label="Direction"
-                icon={directionIcon}
-                placeholder="Select direction"
-                value={direction}
-                options={directions}
-                onSelect={handleDirectionSelect}
-                onClear={() => {
-                  setDirection("");
-                  setStop("");
-                  setStops([]);
-                }}
-              />
-            )}
-
-            {direction && stops.length > 0 && (
-              <Combobox
-                label="Stop"
-                icon={stopIcon}
-                placeholder="Select stop"
-                value={stop}
-                options={stops}
-                onSelect={setStop}
-                onClear={() => setStop("")}
-              />
+            {query && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-white/80 hover:text-white"
+                aria-label="Clear search"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
             )}
           </div>
 
-          {stop && (
-            <button
-              type="submit"
-              className="w-full h-[79px] bg-black border-[3.7px] border-black text-white text-[24px] font-black uppercase tracking-[-0.41px] mb-2"
-            >
-              Soon come?
-            </button>
+          {/* Autocomplete dropdown */}
+          {open && query && (displayResults.length > 0 || showLoading) && (
+            <div className="mt-[12px] bg-white rounded-[28px] overflow-hidden shadow-lg max-h-[60vh] overflow-y-auto px-[16px] py-[24px]">
+              {showLoading && (
+                <div className="text-[14px] font-semibold text-muted">
+                  Loading...
+                </div>
+              )}
+              {displayResults.map((result, i) => (
+                <button
+                  key={`${result.routeTag}-${result.stopTag || "route"}-${i}`}
+                  type="button"
+                  className="w-full text-left py-[12px] text-[14px] font-semibold text-black hover:bg-gray-100 border-b border-gray-100 last:border-b-0 transition-colors"
+                  onClick={() => handleSelect(result)}
+                >
+                  {result.display}
+                </button>
+              ))}
+            </div>
           )}
         </div>
-      </form>
-
-      <Footer />
+      </div>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense>
+      <SearchContent />
+    </Suspense>
   );
 }
