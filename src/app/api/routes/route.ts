@@ -25,7 +25,7 @@ export async function GET() {
 
     cachedRoutes = rawRoutes.map((r) => ({
       tag: r.tag,
-      title: `${r.tag} - ${r.title}`,
+      title: r.title,
     }));
 
     return NextResponse.json(cachedRoutes);
