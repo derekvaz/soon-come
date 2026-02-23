@@ -4,6 +4,26 @@ import Link from "next/link";
 import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 
+interface Favourite {
+  routeTag: string;
+  stopTag: string;
+  display: string;
+}
+
+const STORAGE_KEY = "soon-come-favourites";
+
+function loadFavourites(): Favourite[] {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveFavourites(favs: Favourite[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(favs));
+}
+
 interface Departure {
   minutes: number;
   type: "live" | "estimate";
@@ -47,9 +67,9 @@ function statusColor(dep: Departure): string {
   return dep.type === "live" ? "#02aa55" : "#f27c18";
 }
 
-function StarIcon() {
+function StarIcon({ filled }: { filled?: boolean }) {
   return (
-    <svg width="50" height="50" viewBox="0 0 50 50" fill="none" stroke="white" strokeWidth="1.5" strokeLinejoin="round">
+    <svg width="50" height="50" viewBox="0 0 50 50" fill={filled ? "white" : "none"} stroke="white" strokeWidth="1.5" strokeLinejoin="round">
       <polygon points="25,6 30.5,18.5 44,19.5 34,28.5 37,42 25,35 13,42 16,28.5 6,19.5 19.5,18.5" />
     </svg>
   );
@@ -68,6 +88,26 @@ function ResultsContent() {
 
   const [message, setMessage] = useState<string>("");
   const messagePickedRef = useRef(false);
+  const [isFavourited, setIsFavourited] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const favs = loadFavourites();
+    return favs.some(f => f.routeTag === route && f.stopTag === stop);
+  });
+
+  function toggleFavourite() {
+    const favs = loadFavourites();
+    if (isFavourited) {
+      saveFavourites(favs.filter(f => !(f.routeTag === route && f.stopTag === stop)));
+      setIsFavourited(false);
+    } else if (activeResult) {
+      saveFavourites([...favs, {
+        routeTag: route,
+        stopTag: stop,
+        display: `${route} • ${activeResult.stopName}`,
+      }]);
+      setIsFavourited(true);
+    }
+  }
 
   const fetchPredictions = useCallback(async () => {
     if (!route) return;
@@ -164,8 +204,8 @@ function ResultsContent() {
                 <p>{route} {activeResult.direction}</p>
                 <p>{activeResult.stopName}</p>
               </div>
-              <button aria-label="Save stop" className="shrink-0 opacity-80 hover:opacity-100">
-                <StarIcon />
+              <button aria-label={isFavourited ? "Remove saved stop" : "Save stop"} onClick={toggleFavourite} className="shrink-0 opacity-80 hover:opacity-100">
+                <StarIcon filled={isFavourited} />
               </button>
             </div>
 
