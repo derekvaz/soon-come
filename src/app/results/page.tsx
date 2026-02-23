@@ -193,7 +193,7 @@ function ResultsContent() {
                 {displayDepartures.map((dep, i) => (
                   <div
                     key={i}
-                    className="flex-[1_0_0] bg-[rgba(106,114,130,0.3)] rounded-[16px] py-[16px] flex flex-col gap-[8px] items-center justify-center leading-none"
+                    className="flex-[1_0_0] bg-[rgba(106,114,130,0.5)] rounded-[16px] py-[16px] flex flex-col gap-[8px] items-center justify-center leading-none"
                   >
                     <p className="font-black text-[40px] text-white tracking-[-0.8px]">
                       {dep.minutes}
@@ -212,14 +212,14 @@ function ResultsContent() {
         )}
       </div>
 
-      {/* Fixed bottom search bar */}
-      <footer className="fixed bottom-0 left-0 right-0 px-[16px] py-[16px] z-20">
+      {/* Fixed bottom search bar — pb accounts for iOS safe area */}
+      <footer className="fixed bottom-0 left-0 right-0 px-[16px] pt-[16px] pb-[max(16px,env(safe-area-inset-bottom))] z-20">
         <Link
           href="/?focus=true"
           className={`flex w-full h-[61px] px-[24px] items-center ${
             soonCome
               ? "bg-white/20 rounded-[56px]"
-              : "bg-[rgba(106,114,130,0.3)] rounded-[24px]"
+              : "bg-[rgba(106,114,130,0.5)] rounded-[24px]"
           }`}
         >
           <span className="font-medium text-white text-[16px] tracking-[-0.16px] uppercase truncate leading-[1.3]">

@@ -194,8 +194,8 @@ function SearchContent() {
         </div>
       </div>
 
-      {/* Content — black, input + dropdown pinned to bottom */}
-      <div className="flex-[1_0_0] min-h-0 bg-black flex flex-col justify-end px-[16px] py-[24px]">
+      {/* Content — black, input + dropdown pinned to bottom, pb accounts for iOS safe area */}
+      <div className="flex-[1_0_0] min-h-0 bg-black flex flex-col justify-end px-[16px] pt-[24px] pb-[max(24px,env(safe-area-inset-bottom))]">
         <div className="flex flex-col gap-[24px] w-full" ref={containerRef}>
 
           {/* Autocomplete results card — floats above input */}
