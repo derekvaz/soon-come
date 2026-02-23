@@ -3,6 +3,34 @@
 import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+interface Favourite {
+  routeTag: string;
+  stopTag: string;
+  display: string;
+}
+
+const STORAGE_KEY = "soon-come-favourites";
+
+function loadFavourites(): Favourite[] {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveFavourites(favs: Favourite[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(favs));
+}
+
+function FilledStarIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 50 50" fill="white" stroke="white" strokeWidth="1.5" strokeLinejoin="round">
+      <polygon points="25,6 30.5,18.5 44,19.5 34,28.5 37,42 25,35 13,42 16,28.5 6,19.5 19.5,18.5" />
+    </svg>
+  );
+}
+
 interface Route {
   tag: string;
   title: string;
@@ -39,6 +67,15 @@ function SearchContent() {
   const [isSearching, setIsSearching] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [favourites, setFavourites] = useState<Favourite[]>(() =>
+    typeof window !== "undefined" ? loadFavourites() : []
+  );
+
+  function removeFavourite(routeTag: string, stopTag: string) {
+    const updated = favourites.filter(f => !(f.routeTag === routeTag && f.stopTag === stopTag));
+    saveFavourites(updated);
+    setFavourites(updated);
+  }
 
   useEffect(() => {
     if (shouldFocus && inputRef.current) {
@@ -197,6 +234,38 @@ function SearchContent() {
       {/* Content — black, input + dropdown pinned to bottom */}
       <div className="flex-[1_0_0] min-h-0 bg-black flex flex-col justify-end px-[16px] py-[24px]">
         <div className="flex flex-col gap-[24px] w-full" ref={containerRef}>
+
+          {/* Favourites card — shown when no search query */}
+          {!query && favourites.length > 0 && (
+            <div className="bg-[rgba(106,114,130,0.3)] rounded-[16px] overflow-hidden px-[16px] py-[16px] flex flex-col gap-[20px]">
+              {favourites.map((fav, i) => (
+                <div key={`${fav.routeTag}-${fav.stopTag}`}>
+                  <div className="flex items-center justify-between">
+                    <button
+                      type="button"
+                      className="flex-1 text-left"
+                      onClick={() => router.push(`/results?${new URLSearchParams({ route: fav.routeTag, stop: fav.stopTag })}`)}
+                    >
+                      <p className="font-medium text-[16px] text-white uppercase tracking-[-0.16px] leading-[1.3]">
+                        {fav.display}
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Remove saved stop"
+                      onClick={() => removeFavourite(fav.routeTag, fav.stopTag)}
+                      className="shrink-0 pl-[12px] opacity-80 hover:opacity-100"
+                    >
+                      <FilledStarIcon />
+                    </button>
+                  </div>
+                  {i < favourites.length - 1 && (
+                    <div className="h-px bg-white/20 mt-[20px]" />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Autocomplete results card — floats above input */}
           {open && query && (displayResults.length > 0 || showLoading) && (
