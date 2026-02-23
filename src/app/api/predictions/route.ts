@@ -60,7 +60,9 @@ export async function GET(request: NextRequest) {
         const predictions = Array.isArray(dir.prediction) ? dir.prediction : [dir.prediction];
         const departures = predictions.map((p) => ({
           minutes: parseInt(p.minutes, 10),
-          type: p.vehicle ? ("live" as const) : ("estimate" as const),
+          type: p.vehicle
+            ? p.affectedByLayover === "true" ? ("delayed" as const) : ("live" as const)
+            : ("estimate" as const),
         }));
         const soonCome = departures.length > 0 && departures[0].minutes < 10;
         return {
@@ -121,7 +123,9 @@ export async function GET(request: NextRequest) {
           const predictions = Array.isArray(dir.prediction) ? dir.prediction : [dir.prediction];
           const departures = predictions.map((p) => ({
             minutes: parseInt(p.minutes, 10),
-            type: p.vehicle ? ("live" as const) : ("estimate" as const),
+            type: p.vehicle
+            ? p.affectedByLayover === "true" ? ("delayed" as const) : ("live" as const)
+            : ("estimate" as const),
           }));
           const soonCome = departures.length > 0 && departures[0].minutes < 10;
 
