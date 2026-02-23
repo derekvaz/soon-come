@@ -61,7 +61,7 @@ const NEGATIVE_MESSAGES = [
 
 function statusLabel(dep: Departure): string {
   if (dep.type === "live") return "LIVE";
-  if (dep.type === "delayed") return "DELAYED";
+  if (dep.type === "delayed") return "HOLDING";
   return "SCHEDULED";
 }
 
