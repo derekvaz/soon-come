@@ -211,10 +211,10 @@ function ResultsContent() {
 
             {/* Departure grid */}
             {soonCome ? (
-              /* Soon — plain columns, no tile bg */
-              <div className="flex items-start justify-between h-[81px]">
+              /* Soon — green tile cards */
+              <div className="flex gap-[6px]">
                 {displayDepartures.map((dep, i) => (
-                  <div key={i} className="flex-[1_0_0] flex flex-col h-full items-center justify-between leading-none">
+                  <div key={i} className="flex-[1_0_0] bg-[rgba(0,132,61,0.3)] rounded-[16px] py-[16px] flex flex-col gap-[8px] items-center justify-center leading-none">
                     <p className="font-black text-[40px] text-white tracking-[-0.8px]">
                       {dep.minutes}
                     </p>
@@ -253,7 +253,7 @@ function ResultsContent() {
       </div>
 
       {/* Fixed bottom search bar — pb accounts for iOS safe area */}
-      <footer className="fixed bottom-0 left-0 right-0 px-[16px] pt-[16px] pb-[max(16px,env(safe-area-inset-bottom))] z-20">
+      <footer className="fixed bottom-0 left-0 right-0 bg-black px-[16px] pt-[16px] pb-[max(16px,env(safe-area-inset-bottom))] z-20">
         <Link
           href="/?focus=true"
           className={`flex w-full h-[61px] px-[24px] items-center ${
