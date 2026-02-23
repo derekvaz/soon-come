@@ -11,10 +11,15 @@
   --font-sans: "Public Sans", sans-serif;
 }
 
+html {
+  background: #000000;
+}
+
 body {
-  background: var(--color-background);
+  background: #000000;
   color: var(--color-foreground);
   font-family: var(--font-sans);
+  min-height: 100dvh;
 }
 
 /* Remove dark mode override */

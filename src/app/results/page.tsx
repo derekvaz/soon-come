@@ -220,7 +220,7 @@ function ResultsContent() {
               </button>
             </div>
 
-            {/* Departure tiles — colored by state */}
+            {/* Departure tiles — coloured per status */}
             <div className="flex gap-[6px]">
               {displayDepartures.map((dep, i) => (
                 <div
@@ -243,8 +243,8 @@ function ResultsContent() {
         )}
       </div>
 
-      {/* Fixed bottom search bar */}
-      <footer className="fixed bottom-0 left-0 right-0 px-[16px] py-[16px] z-20">
+      {/* Fixed bottom search bar — pb accounts for iOS safe area */}
+      <footer className="fixed bottom-0 left-0 right-0 bg-black px-[16px] pt-[16px] pb-[max(16px,env(safe-area-inset-bottom))] z-20">
         <Link
           href="/?focus=true"
           className="flex w-full h-[61px] px-[24px] items-center bg-[rgba(106,114,130,0.3)] rounded-[24px]"
