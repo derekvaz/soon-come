@@ -26,7 +26,7 @@ function saveFavourites(favs: Favourite[]) {
 
 interface Departure {
   minutes: number;
-  type: "live" | "estimate";
+  type: "live" | "delayed" | "estimate";
 }
 
 interface Result {
@@ -60,11 +60,15 @@ const NEGATIVE_MESSAGES = [
 ];
 
 function statusLabel(dep: Departure): string {
-  return dep.type === "live" ? "LIVE" : "scheduled";
+  if (dep.type === "live") return "LIVE";
+  if (dep.type === "delayed") return "DELAYED";
+  return "SCHEDULED";
 }
 
 function statusColor(dep: Departure): string {
-  return dep.type === "live" ? "#02aa55" : "#f27c18";
+  if (dep.type === "live") return "#00843d";
+  if (dep.type === "delayed") return "#ef3340";
+  return "#f27c18";
 }
 
 function StarIcon({ filled }: { filled?: boolean }) {
@@ -157,9 +161,11 @@ function ResultsContent() {
     ? `${route} • ${activeResult.direction} • ${activeResult.stopName}`
     : "Search routes or stops...";
 
+  const tileBg = soonCome ? "bg-[rgba(0,132,61,0.4)]" : "bg-[rgba(218,37,29,0.3)]";
+
   return (
     <div className="flex-1 flex flex-col bg-black">
-      {/* Header — 118px, "Soon / Come" stacked, left-aligned */}
+      {/* Header */}
       <div className="h-[118px] bg-black shrink-0 flex items-start pt-[24px] px-[16px]">
         <div className="font-extrabold text-white text-[20px] tracking-[-0.4px] leading-none">
           <p>Soon</p>
@@ -173,7 +179,7 @@ function ResultsContent() {
         {/* Rotating message */}
         <div>
           {isLoading && (
-            <p className="font-extrabold text-[64px] leading-none tracking-[-1.28px] text-white/30">
+            <p className="font-extrabold text-[44px] leading-none tracking-[-0.88px] text-white/30">
               Loading...
             </p>
           )}
@@ -184,7 +190,7 @@ function ResultsContent() {
           )}
           {message && !isLoading && !error && (
             <p
-              className="font-extrabold text-[64px] leading-none tracking-[-1.28px]"
+              className="font-extrabold text-[44px] leading-none tracking-[-0.88px]"
               style={{ color: soonCome ? "#00c950" : "#da251d" }}
             >
               {message}
@@ -209,45 +215,25 @@ function ResultsContent() {
               </button>
             </div>
 
-            {/* Departure grid */}
-            {soonCome ? (
-              /* Soon — plain columns, no tile bg */
-              <div className="flex items-start justify-between h-[81px]">
-                {displayDepartures.map((dep, i) => (
-                  <div key={i} className="flex-[1_0_0] flex flex-col h-full items-center justify-between leading-none">
-                    <p className="font-black text-[40px] text-white tracking-[-0.8px]">
-                      {dep.minutes}
+            {/* Departure tiles — colored by state */}
+            <div className="flex gap-[6px]">
+              {displayDepartures.map((dep, i) => (
+                <div
+                  key={i}
+                  className={`flex-[1_0_0] ${tileBg} rounded-[16px] py-[16px] flex flex-col gap-[8px] items-center justify-center leading-none`}
+                >
+                  <p className="font-black text-[40px] text-white tracking-[-0.8px]">
+                    {dep.minutes}
+                  </p>
+                  <div className="flex flex-col gap-[2px] items-center">
+                    <p className="font-normal text-[20px] text-white tracking-[-0.4px]">mins</p>
+                    <p className="font-semibold text-[15px] tracking-[-0.3px] uppercase" style={{ color: statusColor(dep) }}>
+                      {statusLabel(dep)}
                     </p>
-                    <div className="flex flex-col gap-[2px] items-center">
-                      <p className="font-normal text-[20px] text-white tracking-[-0.4px]">mins</p>
-                      <p className="font-semibold text-[15px] tracking-[-0.3px] uppercase" style={{ color: statusColor(dep) }}>
-                        {statusLabel(dep)}
-                      </p>
-                    </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              /* Later — muted tile cards */
-              <div className="flex gap-[6px]">
-                {displayDepartures.map((dep, i) => (
-                  <div
-                    key={i}
-                    className="flex-[1_0_0] bg-[rgba(106,114,130,0.3)] rounded-[16px] py-[16px] flex flex-col gap-[8px] items-center justify-center leading-none"
-                  >
-                    <p className="font-black text-[40px] text-white tracking-[-0.8px]">
-                      {dep.minutes}
-                    </p>
-                    <div className="flex flex-col gap-[2px] items-center">
-                      <p className="font-normal text-[20px] text-white tracking-[-0.4px]">mins</p>
-                      <p className="font-semibold text-[15px] tracking-[-0.3px] uppercase" style={{ color: statusColor(dep) }}>
-                        {statusLabel(dep)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -256,11 +242,7 @@ function ResultsContent() {
       <footer className="fixed bottom-0 left-0 right-0 px-[16px] py-[16px] z-20">
         <Link
           href="/?focus=true"
-          className={`flex w-full h-[61px] px-[24px] items-center ${
-            soonCome
-              ? "bg-white/20 rounded-[56px]"
-              : "bg-[rgba(106,114,130,0.3)] rounded-[24px]"
-          }`}
+          className="flex w-full h-[61px] px-[24px] items-center bg-[rgba(106,114,130,0.3)] rounded-[24px]"
         >
           <span className="font-medium text-white text-[16px] tracking-[-0.16px] uppercase truncate leading-[1.3]">
             {searchBarLabel}
