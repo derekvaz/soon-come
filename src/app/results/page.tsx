@@ -62,13 +62,19 @@ const NEGATIVE_MESSAGES = [
 function statusLabel(dep: Departure): string {
   if (dep.type === "live") return "LIVE";
   if (dep.type === "delayed") return "HOLDING";
-  return "SCHEDULED";
+  return "UNCONFIRMED";
 }
 
 function statusColor(dep: Departure): string {
   if (dep.type === "live") return "#00843d";
   if (dep.type === "delayed") return "#ef3340";
   return "#f27c18";
+}
+
+function tileBg(dep: Departure): string {
+  if (dep.type === "live") return "bg-[rgba(0,132,61,0.4)]";
+  if (dep.type === "delayed") return "bg-[rgba(218,37,29,0.3)]";
+  return "bg-[rgba(242,124,24,0.3)]";
 }
 
 function StarIcon({ filled }: { filled?: boolean }) {
@@ -161,7 +167,6 @@ function ResultsContent() {
     ? `${route} • ${activeResult.direction} • ${activeResult.stopName}`
     : "Search routes or stops...";
 
-  const tileBg = soonCome ? "bg-[rgba(0,132,61,0.4)]" : "bg-[rgba(218,37,29,0.3)]";
 
   return (
     <div className="flex-1 flex flex-col bg-black">
@@ -220,7 +225,7 @@ function ResultsContent() {
               {displayDepartures.map((dep, i) => (
                 <div
                   key={i}
-                  className={`flex-[1_0_0] ${tileBg} rounded-[16px] py-[16px] flex flex-col gap-[8px] items-center justify-center leading-none`}
+                  className={`flex-[1_0_0] ${tileBg(dep)} rounded-[16px] py-[16px] flex flex-col gap-[8px] items-center justify-center leading-none`}
                 >
                   <p className="font-black text-[40px] text-white tracking-[-0.8px]">
                     {dep.minutes}
