@@ -23,3 +23,14 @@ body {
 }
 
 /* Remove dark mode override */
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

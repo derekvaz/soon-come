@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import Lottie from "lottie-react";
-import resultComingAnimation from "../../../public/animations/result-coming.json";
 
 interface Favourite {
   routeTag: string;
@@ -86,6 +84,9 @@ function StarIcon({ filled }: { filled?: boolean }) {
     </svg>
   );
 }
+
+// Snappy spring-like easing matching the Lottie reference
+const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 
 function ResultsContent() {
   const searchParams = useSearchParams();
@@ -180,32 +181,28 @@ function ResultsContent() {
         </div>
       </div>
 
-      {/* Loading animation — full content area */}
-      {isLoading && (
-        <div className="flex-[1_0_0] min-h-0 flex items-center justify-center pb-[120px]">
-          <Lottie
-            animationData={resultComingAnimation}
-            loop={true}
-            style={{ width: "100%", height: "auto" }}
-          />
-        </div>
-      )}
-
       {/* Main content — message at top, stop info at bottom */}
-      {!isLoading && (
       <div className="flex-[1_0_0] min-h-0 flex flex-col justify-between px-[16px] pt-[36px] pb-[120px]">
 
-        {/* Rotating message */}
+        {/* Message / loading / error */}
         <div>
-          {error && (
+          {isLoading && (
+            <p className="font-extrabold text-[44px] leading-none tracking-[-0.88px] text-white/30">
+              Loading...
+            </p>
+          )}
+          {error && !isLoading && (
             <p className="font-extrabold text-[32px] leading-none tracking-[-0.64px] text-white uppercase">
               {error}
             </p>
           )}
-          {message && !error && (
+          {message && !isLoading && !error && (
             <p
               className="font-extrabold text-[44px] leading-none tracking-[-0.88px]"
-              style={{ color: soonCome ? "#00c950" : "#da251d" }}
+              style={{
+                color: soonCome ? "#00c950" : "#da251d",
+                animation: `slideUpFade 0.55s ${EASE} both`,
+              }}
             >
               {message}
             </p>
@@ -213,8 +210,11 @@ function ResultsContent() {
         </div>
 
         {/* Stop info + departures */}
-        {activeResult && !error && (
-          <div className="flex flex-col gap-[24px]">
+        {activeResult && !isLoading && !error && (
+          <div
+            className="flex flex-col gap-[24px]"
+            style={{ animation: `slideUpFade 0.55s ${EASE} 0.08s both` }}
+          >
             {/* Divider */}
             <div className="h-px bg-white/20" />
 
@@ -229,12 +229,13 @@ function ResultsContent() {
               </button>
             </div>
 
-            {/* Departure tiles — coloured per status */}
+            {/* Departure tiles — each staggered */}
             <div className="flex gap-[6px]">
               {displayDepartures.map((dep, i) => (
                 <div
                   key={i}
                   className={`flex-[1_0_0] ${tileBg(dep)} rounded-[16px] py-[16px] flex flex-col gap-[8px] items-center justify-center leading-none`}
+                  style={{ animation: `slideUpFade 0.45s ${EASE} ${0.16 + i * 0.07}s both` }}
                 >
                   <p className="font-black text-[40px] text-white tracking-[-0.8px]">
                     {dep.minutes}
@@ -251,7 +252,6 @@ function ResultsContent() {
           </div>
         )}
       </div>
-      )}
 
       {/* Fixed bottom search bar — pb accounts for iOS safe area */}
       <footer className="fixed bottom-0 left-0 right-0 bg-black px-[16px] pt-[16px] pb-[max(16px,env(safe-area-inset-bottom))] z-20">
