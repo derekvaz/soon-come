@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import Lottie from "lottie-react";
+import resultComingAnimation from "../../../public/animations/result-coming.json";
 
 interface Favourite {
   routeTag: string;
@@ -178,22 +180,29 @@ function ResultsContent() {
         </div>
       </div>
 
+      {/* Loading animation — full content area */}
+      {isLoading && (
+        <div className="flex-[1_0_0] min-h-0 flex items-center justify-center pb-[120px]">
+          <Lottie
+            animationData={resultComingAnimation}
+            loop={true}
+            style={{ width: "100%", height: "auto" }}
+          />
+        </div>
+      )}
+
       {/* Main content — message at top, stop info at bottom */}
+      {!isLoading && (
       <div className="flex-[1_0_0] min-h-0 flex flex-col justify-between px-[16px] pt-[36px] pb-[120px]">
 
         {/* Rotating message */}
         <div>
-          {isLoading && (
-            <p className="font-extrabold text-[44px] leading-none tracking-[-0.88px] text-white/30">
-              Loading...
-            </p>
-          )}
-          {error && !isLoading && (
+          {error && (
             <p className="font-extrabold text-[32px] leading-none tracking-[-0.64px] text-white uppercase">
               {error}
             </p>
           )}
-          {message && !isLoading && !error && (
+          {message && !error && (
             <p
               className="font-extrabold text-[44px] leading-none tracking-[-0.88px]"
               style={{ color: soonCome ? "#00c950" : "#da251d" }}
@@ -204,7 +213,7 @@ function ResultsContent() {
         </div>
 
         {/* Stop info + departures */}
-        {activeResult && !isLoading && !error && (
+        {activeResult && !error && (
           <div className="flex flex-col gap-[24px]">
             {/* Divider */}
             <div className="h-px bg-white/20" />
@@ -242,6 +251,7 @@ function ResultsContent() {
           </div>
         )}
       </div>
+      )}
 
       {/* Fixed bottom search bar — pb accounts for iOS safe area */}
       <footer className="fixed bottom-0 left-0 right-0 bg-black px-[16px] pt-[16px] pb-[max(16px,env(safe-area-inset-bottom))] z-20">
