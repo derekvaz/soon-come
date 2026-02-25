@@ -234,14 +234,14 @@ function ResultsContent() {
               {displayDepartures.map((dep, i) => (
                 <div
                   key={i}
-                  className={`flex-[1_0_0] ${tileBg(dep)} rounded-[16px] py-[16px] flex flex-col gap-[8px] items-center justify-center leading-none`}
+                  className={`flex-[1_0_0] ${tileBg(dep)} rounded-[16px] py-[16px] flex flex-col gap-[2px] items-center justify-center leading-none`}
                   style={{ animation: `slideUpFade 0.45s ${EASE} ${0.16 + i * 0.07}s both` }}
                 >
                   <p className="font-black text-[40px] text-white tracking-[-0.8px]">
                     {dep.minutes}
                   </p>
-                  <div className="flex flex-col gap-[2px] items-center">
-                    <p className="font-normal text-[20px] text-white tracking-[-0.4px]">mins</p>
+                  <div className="flex flex-col gap-[8px] items-center">
+                    <p className="font-semibold text-[20px] text-white tracking-[-0.4px]">mins</p>
                     <p className="font-semibold text-[15px] tracking-[-0.3px] uppercase" style={{ color: statusColor(dep) }}>
                       {statusLabel(dep)}
                     </p>
