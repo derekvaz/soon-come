@@ -85,6 +85,9 @@ function StarIcon({ filled }: { filled?: boolean }) {
   );
 }
 
+// Snappy spring-like easing matching the Lottie reference
+const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+
 function ResultsContent() {
   const searchParams = useSearchParams();
   const route = searchParams.get("route") ?? "";
@@ -181,7 +184,7 @@ function ResultsContent() {
       {/* Main content — message at top, stop info at bottom */}
       <div className="flex-[1_0_0] min-h-0 flex flex-col justify-between px-[16px] pt-[36px] pb-[120px]">
 
-        {/* Rotating message */}
+        {/* Message / loading / error */}
         <div>
           {isLoading && (
             <p className="font-extrabold text-[44px] leading-none tracking-[-0.88px] text-white/30">
@@ -196,7 +199,10 @@ function ResultsContent() {
           {message && !isLoading && !error && (
             <p
               className="font-extrabold text-[44px] leading-none tracking-[-0.88px]"
-              style={{ color: soonCome ? "#00c950" : "#da251d" }}
+              style={{
+                color: soonCome ? "#00c950" : "#da251d",
+                animation: `slideUpFade 0.55s ${EASE} both`,
+              }}
             >
               {message}
             </p>
@@ -205,7 +211,10 @@ function ResultsContent() {
 
         {/* Stop info + departures */}
         {activeResult && !isLoading && !error && (
-          <div className="flex flex-col gap-[24px]">
+          <div
+            className="flex flex-col gap-[24px]"
+            style={{ animation: `slideUpFade 0.55s ${EASE} 0.08s both` }}
+          >
             {/* Divider */}
             <div className="h-px bg-white/20" />
 
@@ -220,18 +229,19 @@ function ResultsContent() {
               </button>
             </div>
 
-            {/* Departure tiles — coloured per status */}
+            {/* Departure tiles — each staggered */}
             <div className="flex gap-[6px]">
               {displayDepartures.map((dep, i) => (
                 <div
                   key={i}
-                  className={`flex-[1_0_0] ${tileBg(dep)} rounded-[16px] py-[16px] flex flex-col gap-[8px] items-center justify-center leading-none`}
+                  className={`flex-[1_0_0] ${tileBg(dep)} rounded-[16px] py-[16px] flex flex-col gap-[2px] items-center justify-center leading-none`}
+                  style={{ animation: `slideUpFade 0.45s ${EASE} ${0.16 + i * 0.07}s both` }}
                 >
                   <p className="font-black text-[40px] text-white tracking-[-0.8px]">
                     {dep.minutes}
                   </p>
-                  <div className="flex flex-col gap-[2px] items-center">
-                    <p className="font-normal text-[20px] text-white tracking-[-0.4px]">mins</p>
+                  <div className="flex flex-col gap-[8px] items-center">
+                    <p className="font-semibold text-[20px] text-white tracking-[-0.4px]">mins</p>
                     <p className="font-semibold text-[15px] tracking-[-0.3px] uppercase" style={{ color: statusColor(dep) }}>
                       {statusLabel(dep)}
                     </p>
