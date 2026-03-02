@@ -222,9 +222,9 @@ function SearchContent() {
   }
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col bg-[#da251d]">
       {/* Header — 118px, "Soon / Come" stacked, left-aligned */}
-      <div className="h-[118px] bg-black shrink-0 flex items-center pt-[48px] px-[16px]">
+      <div className="h-[118px] shrink-0 flex items-center pt-[48px] px-[16px]">
         <div className="font-extrabold text-white text-[20px] tracking-[-0.4px] leading-none">
           <p>Soon</p>
           <p>Come</p>
@@ -232,7 +232,7 @@ function SearchContent() {
       </div>
 
       {/* Content — black, input + dropdown pinned to bottom, pb accounts for iOS safe area */}
-      <div className="flex-[1_0_0] min-h-0 bg-black flex flex-col justify-end px-[16px] pt-[24px] pb-[max(24px,env(safe-area-inset-bottom))]">
+      <div className="flex-[1_0_0] min-h-0 flex flex-col justify-end px-[16px] pt-[24px] pb-[max(24px,env(safe-area-inset-bottom))]">
         <div className="flex flex-col gap-[24px] w-full" ref={containerRef}>
 
           {/* Favourites card — shown when no search query */}
