@@ -12,11 +12,11 @@
 }
 
 html {
-  background: #000000;
+  background: #da251d;
 }
 
 body {
-  background: #000000;
+  background: #da251d;
   color: var(--color-foreground);
   font-family: var(--font-sans);
   min-height: 100dvh;
