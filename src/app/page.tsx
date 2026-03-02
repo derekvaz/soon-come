@@ -23,10 +23,10 @@ function saveFavourites(favs: Favourite[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(favs));
 }
 
-function FilledStarIcon() {
+function BookmarkIcon() {
   return (
-    <svg width="24" height="24" viewBox="0 0 50 50" fill="white" stroke="white" strokeWidth="1.5" strokeLinejoin="round">
-      <polygon points="25,6 30.5,18.5 44,19.5 34,28.5 37,42 25,35 13,42 16,28.5 6,19.5 19.5,18.5" />
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z" />
     </svg>
   );
 }
@@ -224,7 +224,7 @@ function SearchContent() {
   return (
     <div className="flex-1 flex flex-col">
       {/* Header — 118px, "Soon / Come" stacked, left-aligned */}
-      <div className="h-[118px] bg-black shrink-0 flex items-start pt-[24px] px-[16px]">
+      <div className="h-[118px] bg-black shrink-0 flex items-center pt-[48px] px-[16px]">
         <div className="font-extrabold text-white text-[20px] tracking-[-0.4px] leading-none">
           <p>Soon</p>
           <p>Come</p>
@@ -256,7 +256,7 @@ function SearchContent() {
                       onClick={() => removeFavourite(fav.routeTag, fav.stopTag)}
                       className="shrink-0 pl-[12px] opacity-80 hover:opacity-100"
                     >
-                      <FilledStarIcon />
+                      <BookmarkIcon />
                     </button>
                   </div>
                   {i < favourites.length - 1 && (
@@ -296,6 +296,12 @@ function SearchContent() {
 
           {/* Search input — pinned to bottom */}
           <div className="relative shrink-0">
+            <div className="absolute left-[16px] top-1/2 -translate-y-1/2 pointer-events-none">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+            </div>
             <input
               ref={inputRef}
               type="text"
@@ -303,13 +309,13 @@ function SearchContent() {
               onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
               onFocus={() => setOpen(true)}
               placeholder="Search routes or stops..."
-              className="w-full h-[61px] bg-[rgba(255,255,255,0.15)] px-[24px] rounded-[56px] text-white text-[16px] font-medium tracking-[-0.16px] uppercase placeholder:text-white/40 focus:outline-none"
+              className="w-full h-[61px] bg-white pl-[52px] pr-[44px] rounded-[24px] text-black text-[17px] font-semibold tracking-[-0.34px] uppercase placeholder:text-black/40 focus:outline-none"
             />
             {query && (
               <button
                 type="button"
                 onClick={handleClear}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-white/60 hover:text-white"
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-black/40 hover:text-black"
                 aria-label="Clear search"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -319,6 +325,11 @@ function SearchContent() {
             )}
           </div>
         </div>
+
+        {/* Footer */}
+        <p className="text-center font-medium text-white text-[16px] tracking-[-0.16px] underline mt-[24px]">
+          Built with love by Mom+Dad
+        </p>
       </div>
     </div>
   );
