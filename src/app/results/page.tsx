@@ -66,21 +66,34 @@ function statusLabel(dep: Departure): string {
 }
 
 function statusColor(dep: Departure): string {
-  if (dep.type === "live") return "#00843d";
+  if (dep.type === "live") return "#00c950";
   if (dep.type === "delayed") return "#ef3340";
   return "#f27c18";
 }
 
-function tileBg(dep: Departure): string {
-  if (dep.type === "live") return "bg-[rgba(0,132,61,0.4)]";
-  if (dep.type === "delayed") return "bg-[rgba(218,37,29,0.3)]";
-  return "bg-[rgba(242,124,24,0.3)]";
+function BookmarkIcon({ filled }: { filled?: boolean }) {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill={filled ? "black" : "none"} stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z" />
+    </svg>
+  );
 }
 
-function StarIcon({ filled }: { filled?: boolean }) {
+function ShareIcon() {
   return (
-    <svg width="50" height="50" viewBox="0 0 50 50" fill={filled ? "white" : "none"} stroke="white" strokeWidth="1.5" strokeLinejoin="round">
-      <polygon points="25,6 30.5,18.5 44,19.5 34,28.5 37,42 25,35 13,42 16,28.5 6,19.5 19.5,18.5" />
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2v13" />
+      <path d="M8 6l4-4 4 4" />
+      <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+    </svg>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.35-4.35" />
     </svg>
   );
 }
@@ -119,6 +132,22 @@ function ResultsContent() {
         display: `${route} • ${activeResult.stopName}`,
       }]);
       setIsFavourited(true);
+    }
+  }
+
+  async function handleShare() {
+    const text = activeResult
+      ? `${route} ${activeResult.direction} — ${activeResult.stopName}`
+      : "Soon Come? — Toronto Real-Time Transit";
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Soon Come?", text, url });
+      } catch {
+        // dismissed
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
     }
   }
 
@@ -166,26 +195,57 @@ function ResultsContent() {
     }
   }, [status, soonCome]);
 
-  const searchBarLabel = activeResult
-    ? `${route} • ${activeResult.direction} • ${activeResult.stopName}`
-    : "Search routes or stops...";
-
-
   return (
-    <div className="flex-1 flex flex-col bg-black">
+    <div
+      className="flex-1 flex flex-col transition-colors duration-500"
+      style={{ backgroundColor: soonCome && !isLoading && !error ? "#da251d" : "black" }}
+    >
       {/* Header */}
-      <div className="h-[118px] bg-black shrink-0 flex items-start pt-[24px] px-[16px]">
+      <div className="h-[118px] shrink-0 flex items-center justify-between pt-[48px] px-[16px]">
         <div className="font-extrabold text-white text-[20px] tracking-[-0.4px] leading-none">
           <p>Soon</p>
           <p>Come</p>
         </div>
+        {activeResult && !isLoading && !error && (
+          <div className="flex gap-[12px]">
+            <button
+              aria-label={isFavourited ? "Remove saved stop" : "Save stop"}
+              onClick={toggleFavourite}
+              className="size-[40px] bg-white rounded-[20px] flex items-center justify-center"
+            >
+              <BookmarkIcon filled={isFavourited} />
+            </button>
+            <button
+              aria-label="Share"
+              onClick={handleShare}
+              className="size-[40px] bg-white rounded-[20px] flex items-center justify-center"
+            >
+              <ShareIcon />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Main content — message at top, stop info at bottom */}
-      <div className="flex-[1_0_0] min-h-0 flex flex-col justify-between px-[16px] pt-[36px] pb-[120px]">
+      {/* Main content */}
+      <div className="flex-1 flex flex-col px-[16px] gap-[24px] min-h-0 pb-[16px]">
 
-        {/* Message / loading / error */}
-        <div>
+        {/* Route + Stop info */}
+        {activeResult && !isLoading && !error && (
+          <div
+            className="flex flex-col gap-[8px] shrink-0"
+            style={{ animation: `slideUpFade 0.55s ${EASE} both` }}
+          >
+            <p className="font-extrabold text-white text-[20px] tracking-[-0.4px] leading-none">
+              {route} {activeResult.direction}
+            </p>
+            <p className="font-extrabold text-white text-[32px] tracking-[-0.64px] leading-none">
+              {activeResult.stopName}
+            </p>
+          </div>
+        )}
+
+        {/* Message card */}
+        <div className="flex-1 bg-[rgba(0,0,0,0.9)] rounded-[36px] px-[24px] py-[28px] flex flex-col justify-end min-h-0">
           {isLoading && (
             <p className="font-extrabold text-[44px] leading-none tracking-[-0.88px] text-white/30">
               Loading...
@@ -200,7 +260,7 @@ function ResultsContent() {
             <p
               className="font-extrabold text-[44px] leading-none tracking-[-0.88px]"
               style={{
-                color: soonCome ? "#00c950" : "#da251d",
+                color: soonCome ? "#00c950" : "#ef3340",
                 animation: `slideUpFade 0.55s ${EASE} both`,
               }}
             >
@@ -209,61 +269,45 @@ function ResultsContent() {
           )}
         </div>
 
-        {/* Stop info + departures */}
+        {/* Departure tiles */}
         {activeResult && !isLoading && !error && (
-          <div
-            className="flex flex-col gap-[24px]"
-            style={{ animation: `slideUpFade 0.55s ${EASE} 0.08s both` }}
-          >
-            {/* Divider */}
-            <div className="h-px bg-white/20" />
-
-            {/* Stop name + star */}
-            <div className="flex items-start justify-between">
-              <div className="font-extrabold text-white text-[20px] tracking-[-0.4px] leading-none flex flex-col gap-[6px]">
-                <p>{route} {activeResult.direction}</p>
-                <p>{activeResult.stopName}</p>
-              </div>
-              <button aria-label={isFavourited ? "Remove saved stop" : "Save stop"} onClick={toggleFavourite} className="shrink-0 opacity-80 hover:opacity-100">
-                <StarIcon filled={isFavourited} />
-              </button>
-            </div>
-
-            {/* Departure tiles — each staggered */}
-            <div className="flex gap-[6px]">
-              {displayDepartures.map((dep, i) => (
-                <div
-                  key={i}
-                  className={`flex-[1_0_0] ${tileBg(dep)} rounded-[16px] py-[16px] flex flex-col gap-[2px] items-center justify-center leading-none`}
-                  style={{ animation: `slideUpFade 0.45s ${EASE} ${0.16 + i * 0.07}s both` }}
-                >
-                  <p className="font-black text-[40px] text-white tracking-[-0.8px]">
-                    {dep.minutes}
+          <div className="flex gap-[12px] shrink-0">
+            {displayDepartures.map((dep, i) => (
+              <div
+                key={i}
+                className="flex-1 bg-black rounded-[24px] py-[16px] flex flex-col gap-[2px] items-center justify-center leading-none"
+                style={{ animation: `slideUpFade 0.45s ${EASE} ${0.16 + i * 0.07}s both` }}
+              >
+                <p className="font-black text-[40px] text-white tracking-[-0.8px]">
+                  {dep.minutes}
+                </p>
+                <div className="flex flex-col gap-[8px] items-center">
+                  <p className="font-semibold text-[20px] text-white tracking-[-0.4px]">mins</p>
+                  <p className="font-bold text-[13px] uppercase" style={{ color: statusColor(dep) }}>
+                    {statusLabel(dep)}
                   </p>
-                  <div className="flex flex-col gap-[8px] items-center">
-                    <p className="font-semibold text-[20px] text-white tracking-[-0.4px]">mins</p>
-                    <p className="font-semibold text-[15px] tracking-[-0.3px] uppercase" style={{ color: statusColor(dep) }}>
-                      {statusLabel(dep)}
-                    </p>
-                  </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         )}
-      </div>
 
-      {/* Fixed bottom search bar — pb accounts for iOS safe area */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-black px-[16px] pt-[16px] pb-[max(16px,env(safe-area-inset-bottom))] z-20">
+        {/* Search bar */}
         <Link
           href="/?focus=true"
-          className="flex w-full h-[61px] px-[24px] items-center bg-[rgba(106,114,130,0.3)] rounded-[24px]"
+          className="flex shrink-0 h-[61px] px-[16px] gap-[8px] items-center bg-white rounded-[24px]"
         >
-          <span className="font-medium text-white text-[16px] tracking-[-0.16px] uppercase truncate leading-[1.3]">
-            {searchBarLabel}
+          <SearchIcon />
+          <span className="font-semibold text-black text-[17px] tracking-[-0.34px] leading-none whitespace-nowrap">
+            Search another route and stop
           </span>
         </Link>
-      </footer>
+
+        {/* Footer */}
+        <p className="text-center font-medium text-white text-[16px] tracking-[-0.16px] underline shrink-0 pb-[max(0px,env(safe-area-inset-bottom))]">
+          Built with love by Mom+Dad
+        </p>
+      </div>
     </div>
   );
 }
