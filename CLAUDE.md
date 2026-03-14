@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 ## Project Overview
 
 **Soon Come** is a real-time Toronto transit (TTC) arrival web app. Users search by route and optional location to see if a vehicle is arriving soon. Built with Next.js 16 App Router, React 19, TypeScript 5, and Tailwind CSS v4.
@@ -22,14 +24,14 @@ src/
 ├── app/
 │   ├── api/
 │   │   ├── routes/route.ts        # GET /api/routes — TTC route list
+│   │   ├── stops/route.ts         # GET /api/stops — stops/directions for a route
 │   │   └── predictions/route.ts   # GET /api/predictions — arrival times
-│   ├── results/page.tsx           # Results page (shows predictions)
+│   ├── results/page.tsx           # Results page (shows predictions inline, no ArrivalCard)
 │   ├── layout.tsx                 # Root layout (metadata, fonts, container)
-│   ├── page.tsx                   # Home/search page (route combobox + location)
+│   ├── page.tsx                   # Home/search page (text search with autocomplete)
 │   └── globals.css                # Tailwind v4 theme (custom colors, fonts)
 └── components/
-    ├── ArrivalCard.tsx            # Single arrival prediction card
-    └── Footer.tsx                 # Footer with GTFS badge
+    └── Footer.tsx                 # Footer with GTFS badge (currently unused)
 ```
 
 ## Commands
@@ -45,12 +47,29 @@ All data comes from the **Umoiq/NextBus public API** (no auth required):
 
 - Base URL: `https://retro.umoiq.com/service/publicJSONFeed`
 - `?command=routeList&a=ttc` — all TTC routes
-- `?command=routeConfig&a=ttc&r={tag}` — stops for a route
+- `?command=routeConfig&a=ttc&r={tag}` — stops/directions for a route
 - `?command=predictions&a=ttc&r={tag}&s={stopTag}` — arrival predictions
 
-Route list is cached in memory. Predictions are fetched for up to 10 matching stops in parallel.
+### API Routes
+
+| Endpoint | Params | Description |
+|----------|--------|-------------|
+| `GET /api/routes` | — | TTC route list (memory-cached) |
+| `GET /api/stops` | `route`, `direction?` | Directions and stops for a route; when `direction` is omitted returns only directions |
+| `GET /api/predictions` | `route`, `stop?`, `location?` | Predictions for a specific stop tag (fast path) or location-name search (fetches up to 10 matching stops in parallel) |
+
+### Departure Types
+
+Each departure has a `type` field:
+- `live` — vehicle assigned, not held at layover
+- `delayed` — vehicle assigned but `affectedByLayover === "true"`
+- `estimate` — no vehicle assigned yet
 
 **"Soon Come" threshold**: A vehicle is marked as arriving soon if the next departure is **< 10 minutes**.
+
+### Favourites
+
+Saved stops are persisted in `localStorage` under the key `soon-come-favourites` as `{ routeTag, stopTag, display }[]`. The home page shows saved stops when the search input is empty.
 
 ## Code Conventions
 
@@ -77,7 +96,10 @@ Route list is cached in memory. Predictions are fetched for up to 10 matching st
 - Mobile-first: max-width 430px container
 - Bold typography: Inter font, weights 700 and 900
 - High contrast black/white with green/red accents
-- Large 96px text for "Soon come?" header and Yes/No answers
+- Results page background transitions to `#da251d` (TTC red) when `soonCome` is true
+- Search page uses `#da251d` as a static background; results card is black
+- Inline SVG icons (no icon library) — BookmarkIcon, ShareIcon, SearchIcon defined within page files
+- `slideUpFade` CSS animation (defined in `globals.css`) used for staggered entrance of result elements
 
 ## Dev Workflow
 
